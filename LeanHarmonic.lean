@@ -1,40 +1,89 @@
 import Mathlib.Tactic
 
 import Mathlib.Analysis.NormedSpace.Basic
+
+-- definition of EuclideanSpace
+import Mathlib.Analysis.InnerProductSpace.PiL2
+
+-- theorem on linear map on R^n
+import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+
 import Mathlib.Topology.MetricSpace.Basic
+
+-- interesting things on scaling balls
+import Mathlib.Topology.MetricSpace.Dilation
+
+
 import Mathlib.Data.Set.Basic
 
---import Mathlib.MeasureTheory.PiSystem
+-- check out piiUnionInter: generate a pi system from a collection of sets
+import Mathlib.MeasureTheory.PiSystem
 
--- structure StandardSimplex (n : ℕ) where
---   V : Fin n → ℝ
---   NonNeg : ∀ i : Fin n, 0 ≤ V i
---   sum_eq_one : (∑ i, V i) = 1
+noncomputable section 
 
--- structure RyansStruct (r : ℝ) (E : Type _) [NormedAddCommGroup E] [NormedSpace ℝ E] where
---   S : 
---   on_sphere : ∀ x ∈ S, ‖x‖ = r 
-section 
-variable {E : Type _} [NormedAddCommGroup E] [NormedSpace ℝ E]
+variable {E : Type _} [NormedAddCommGroup E] 
+variable {r : ℝ}
 
-structure SphericalAngle (F : Type)  [NormedAddCommGroup F] (r : ℝ) where
-  A : Set F
-  on_sphere : ∀ x ∈ A, ‖x‖ = r
 
-instance : Coe (SA : SphericalAngle E r) (Set E) where
-  coe a := a.A
+@[ext]
+structure PolarSector (F : Type) (r : ℝ) [NormedAddCommGroup F] where
+  polar_set : Set F
+  on_sphere {x} : x ∈ polar_set → ‖x‖ = r
 
-attribute [coe] SphericalAngle.A
+instance [NormedAddCommGroup F] {r: ℝ}: SetLike (PolarSector F r) F where
+  coe := PolarSector.polar_set
+  coe_injective' := PolarSector.ext
+
+attribute [coe] PolarSector.polar_set
+
 
 open Set
 
-theorem sphericalAngle_on_sphere {r : ℝ} (SA : SphericalAngle E r) : 
-    SA.A ⊆ Metric.sphere 0 r := by
-  rw [Metric.sphere,subset_def]
-  intros x hx
+theorem PolarSector_on_sphere (PC : PolarSector E r) : ∀ x∈ PC, x∈ Metric.sphere 0 r := by
+  intro x hx
+  rw [Metric.sphere]
   dsimp
   rw [dist_eq_norm_sub,sub_zero]
-  exact SA.on_sphere x hx
+  exact PC.on_sphere hx
+
+--theorem PolarSector_on_sphere' (PC : PolarSector E r) : PC ⊆ Metric.sphere (0:E) r := by sorry
+
+theorem PolarSector_on_sphere' (PC : PolarSector E r) : PC.polar_set ⊆ Metric.sphere (0:E) r := by 
+  rw [subset_def]
+  intro x hx
+  exact PolarSector_on_sphere PC x hx
 
 
 
+-- variable (n:ℕ )
+-- #check EuclideanSpace ℝ (Fin n)
+-- #check R 10
+
+-- #check EuclideanSpace ℝ (Fin n)
+
+-- noncomputable example (x : EuclideanSpace ℝ (Fin n)): ℝ := by
+--   exact ‖x‖  
+
+-- --example [EuclideanSpace ℝ (Fin n)] : NormedAddCommGroup ((Fin n) → ℝ)
+-- #check NormedAddCommGroup ((Fin n)→ℝ )
+
+
+def S (n:ℕ) := Metric.sphere (0 : EuclideanSpace ℝ (Fin n)) 1 
+def R (n:ℕ) := EuclideanSpace ℝ (Fin n)
+
+example {n:ℕ}: NormedSpace ℝ (EuclideanSpace ℝ (Fin n)) := by infer_instance
+
+variable {n:ℕ}
+
+def Φ (n:ℕ): (@Ioi ℝ _ 0) × (S n) → (R n) := fun ⟨ r, x ⟩ =>
+  by
+  have r' : ℝ := r
+  have x' : EuclideanSpace ℝ (Fin n) := x
+  exact r'•x'
+
+
+def PolarCone (PC : PolarSector E r) [NormedAddCommGroup E] [NormedSpace ℝ E] := { x | ∃ (s : ℝ) (y : E), y∈ PC ∧ x = s•y }
+
+
+
+end
